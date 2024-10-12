@@ -16,7 +16,7 @@ app = FastAPI()
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://pixelfuse-frontend.onrender.com/"],  # Make sure this matches your frontend port
+    allow_origins=["https://pixelfuse-frontend.onrender.com"],  # Make sure this matches your frontend port
     allow_credentials=True,
     allow_methods=["*"],  # or specify the methods you need
     allow_headers=["*"],  # or specify the headers you need
