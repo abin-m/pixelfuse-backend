@@ -2,12 +2,13 @@ import base64
 import zipfile
 from fastapi import BackgroundTasks, FastAPI, File, Form, UploadFile, HTTPException
 from typing import List
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from fastapi.responses import FileResponse
 import pyheif
 import io
 import os
 from fastapi.middleware.cors import CORSMiddleware
+
 
 app = FastAPI()
 
@@ -20,11 +21,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Helper function to convert image to base64
-def encode_image_to_base64(image: bytes):
-    return base64.b64encode(image).decode('utf-8')
 
-# Function to open HEIC image and convert it to a format supported by PIL
+# Helper function to convert image to base64 without changing format or quality
+def encode_image_to_base64(image: Image.Image, format: str):
+    buffered = io.BytesIO()
+    image.save(buffered, format=format)  # Keep original format without compression
+    return base64.b64encode(buffered.getvalue()).decode('utf-8')
+
+
+# Function to open HEIC image and convert to PIL format
 def open_heic_image(content: bytes):
     heif_file = pyheif.read_heif(content)
     image = Image.frombytes(
@@ -35,7 +40,8 @@ def open_heic_image(content: bytes):
         heif_file.mode,
         heif_file.stride,
     )
-    return image
+    return image, "HEIC"  # Return HEIC as format
+
 
 @app.post("/convert-embed/")
 async def convert_embed_images(
@@ -45,37 +51,25 @@ async def convert_embed_images(
     # Check if more than 10 files are uploaded
     if len(files) > 10:
         raise HTTPException(status_code=400, detail="You can upload a maximum of 10 files.")
-    
-    # Prepare text content that will be written into the text file
+
     text_content = f"Filename: {output_file_name}\n\n"
-    total_size = 0
-    max_total_size = 5 * 1024 * 1024  # 5 MB limit
 
     for idx, file in enumerate(files):
-        content = await file.read()  # Read the content of each uploaded file
+        content = await file.read()
         try:
-            # Handle HEIC files separately
+            # Check if the file is HEIC or any other image type
             if file.filename.lower().endswith(".heic") or file.content_type == "image/heic":
-                image = open_heic_image(content)  # Open HEIC image
-                img_format = "HEIC"
+                image, image_format = open_heic_image(content)  # Open HEIC
             else:
-                image = Image.open(io.BytesIO(content))  # Open other image formats
-                img_format = image.format
+                image = Image.open(io.BytesIO(content))  # Open other formats
+                image_format = image.format  # Detect original format
 
-            # Encode the original image without quality reduction
-            encoded_image = encode_image_to_base64(content)
-            image_size = len(encoded_image.encode('utf-8'))
-
-            # Check total size doesn't exceed 5MB
-            if total_size + image_size > max_total_size:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Total size exceeds 5 MB limit. Try uploading fewer or smaller files."
-                )
-
-            total_size += image_size
+            # Encode image to base64 with original format and quality
+            encoded_image = encode_image_to_base64(image, image_format)
             text_content += f"Image {idx + 1} ({file.filename}):\n{encoded_image}\n\n"
 
+        except UnidentifiedImageError:
+            raise HTTPException(status_code=400, detail=f"Cannot identify image file: {file.filename}")
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Cannot process image file: {file.filename}. Error: {str(e)}")
 
@@ -100,21 +94,21 @@ async def extract_images_from_text(background_tasks: BackgroundTasks, file: Uplo
 
     for idx, block in enumerate(decoded_images):
         if block.startswith("Image"):
-            # Extract image info and base64 data
             try:
+                # Extract image info and base64 data
                 header, encoded_img = block.split(":", 1)
                 encoded_img = encoded_img.strip()
                 img_data = base64.b64decode(encoded_img)
-                
-                # Open the image directly from the original format
                 img = Image.open(io.BytesIO(img_data))
-                img_format = img.format.lower() or "jpeg"  # Retain the original format
-                
+
+                # Detect image format from header and save with the original extension
+                img_format = img.format.lower() if img.format else "jpeg"
                 output_image_path = os.path.join(output_dir, f"extracted_image_{idx + 1}.{img_format}")
-                with open(output_image_path, 'wb') as f:
-                    f.write(img_data)  # Save the image without modification
-                
+                img.save(output_image_path)
                 extracted_images.append(output_image_path)
+
+            except UnidentifiedImageError:
+                raise HTTPException(status_code=400, detail=f"Error processing image {idx + 1}: Cannot identify image file.")
             except Exception as e:
                 raise HTTPException(status_code=400, detail=f"Error processing image {idx + 1}: {str(e)}")
 
@@ -124,12 +118,13 @@ async def extract_images_from_text(background_tasks: BackgroundTasks, file: Uplo
     with zipfile.ZipFile(zip_path, 'w') as zipf:
         for img in extracted_images:
             zipf.write(img, os.path.basename(img))
-    
+
     background_tasks.add_task(clean_up_files, output_dir)
 
     return FileResponse(zip_path, media_type='application/zip', filename=zip_filename)
 
-# Clean up function to delete files after download
+
+# Cleanup function to remove extracted images and ZIP file after download
 def clean_up_files(directory):
     for filename in os.listdir(directory):
         file_path = os.path.join(directory, filename)
