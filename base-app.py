@@ -5,6 +5,7 @@ from typing import List
 from fastapi.responses import FileResponse
 import os
 import io
+from PIL import Image  # Import Pillow for handling non-HEIC formats
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -41,10 +42,10 @@ async def convert_embed_images(
                 encoded_image = encode_file_to_base64(content)
                 text_content += f"Image {idx + 1} ({file.filename}):\n{encoded_image}\n\n"
             else:
-                # Handle non-HEIC images by loading them via PIL and encoding to base64
+                # Handle other image formats like JPG, PNG using PIL
                 image = Image.open(io.BytesIO(content))
                 buffered = io.BytesIO()
-                image.save(buffered, format=image.format)  # Keep original format
+                image.save(buffered, format=image.format)  # Keep original format (e.g., PNG, JPEG)
                 encoded_image = base64.b64encode(buffered.getvalue()).decode('utf-8')
                 text_content += f"Image {idx + 1} ({file.filename}):\n{encoded_image}\n\n"
 
@@ -84,7 +85,7 @@ async def extract_images_from_text(background_tasks: BackgroundTasks, file: Uplo
                     with open(output_image_path, "wb") as f:
                         f.write(img_data)
                 else:
-                    # For other formats, process with PIL
+                    # For other formats (JPG, PNG, etc.), process with PIL
                     img = Image.open(io.BytesIO(img_data))
                     img_format = img.format.lower() if img.format else "jpeg"
                     output_image_path = os.path.join(output_dir, f"extracted_image_{idx + 1}.{img_format}")
