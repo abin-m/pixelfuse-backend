@@ -2,13 +2,10 @@ import base64
 import zipfile
 from fastapi import BackgroundTasks, FastAPI, File, Form, UploadFile, HTTPException
 from typing import List
-from PIL import Image, UnidentifiedImageError
 from fastapi.responses import FileResponse
-import pyheif
-import io
 import os
+import io
 from fastapi.middleware.cors import CORSMiddleware
-
 
 app = FastAPI()
 
@@ -21,27 +18,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-# Helper function to convert image to base64 without changing format or quality
-def encode_image_to_base64(image: Image.Image, format: str):
-    buffered = io.BytesIO()
-    image.save(buffered, format=format)  # Keep original format without compression
-    return base64.b64encode(buffered.getvalue()).decode('utf-8')
-
-
-# Function to open HEIC image and convert to PIL format
-def open_heic_image(content: bytes):
-    heif_file = pyheif.read_heif(content)
-    image = Image.frombytes(
-        heif_file.mode,
-        heif_file.size,
-        heif_file.data,
-        "raw",
-        heif_file.mode,
-        heif_file.stride,
-    )
-    return image, "HEIC"  # Return HEIC as format
-
+# Helper function to encode any file to base64
+def encode_file_to_base64(file_content: bytes):
+    return base64.b64encode(file_content).decode('utf-8')
 
 @app.post("/convert-embed/")
 async def convert_embed_images(
@@ -57,19 +36,18 @@ async def convert_embed_images(
     for idx, file in enumerate(files):
         content = await file.read()
         try:
-            # Check if the file is HEIC or any other image type
             if file.filename.lower().endswith(".heic") or file.content_type == "image/heic":
-                image, image_format = open_heic_image(content)  # Open HEIC
+                # HEIC file handling (direct base64 encoding without modification)
+                encoded_image = encode_file_to_base64(content)
+                text_content += f"Image {idx + 1} ({file.filename}):\n{encoded_image}\n\n"
             else:
-                image = Image.open(io.BytesIO(content))  # Open other formats
-                image_format = image.format  # Detect original format
+                # Handle non-HEIC images by loading them via PIL and encoding to base64
+                image = Image.open(io.BytesIO(content))
+                buffered = io.BytesIO()
+                image.save(buffered, format=image.format)  # Keep original format
+                encoded_image = base64.b64encode(buffered.getvalue()).decode('utf-8')
+                text_content += f"Image {idx + 1} ({file.filename}):\n{encoded_image}\n\n"
 
-            # Encode image to base64 with original format and quality
-            encoded_image = encode_image_to_base64(image, image_format)
-            text_content += f"Image {idx + 1} ({file.filename}):\n{encoded_image}\n\n"
-
-        except UnidentifiedImageError:
-            raise HTTPException(status_code=400, detail=f"Cannot identify image file: {file.filename}")
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Cannot process image file: {file.filename}. Error: {str(e)}")
 
@@ -99,16 +77,21 @@ async def extract_images_from_text(background_tasks: BackgroundTasks, file: Uplo
                 header, encoded_img = block.split(":", 1)
                 encoded_img = encoded_img.strip()
                 img_data = base64.b64decode(encoded_img)
-                img = Image.open(io.BytesIO(img_data))
 
-                # Detect image format from header and save with the original extension
-                img_format = img.format.lower() if img.format else "jpeg"
-                output_image_path = os.path.join(output_dir, f"extracted_image_{idx + 1}.{img_format}")
-                img.save(output_image_path)
+                # Save HEIC files as-is without re-encoding or conversion
+                if "heic" in header.lower():
+                    output_image_path = os.path.join(output_dir, f"extracted_image_{idx + 1}.heic")
+                    with open(output_image_path, "wb") as f:
+                        f.write(img_data)
+                else:
+                    # For other formats, process with PIL
+                    img = Image.open(io.BytesIO(img_data))
+                    img_format = img.format.lower() if img.format else "jpeg"
+                    output_image_path = os.path.join(output_dir, f"extracted_image_{idx + 1}.{img_format}")
+                    img.save(output_image_path)
+                
                 extracted_images.append(output_image_path)
 
-            except UnidentifiedImageError:
-                raise HTTPException(status_code=400, detail=f"Error processing image {idx + 1}: Cannot identify image file.")
             except Exception as e:
                 raise HTTPException(status_code=400, detail=f"Error processing image {idx + 1}: {str(e)}")
 
