@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: pixelfuse-backend
+    runtime: python
+    buildCommand: pip install -e .
+    startCommand: pixelfuse serve
+    envVars:
+      - key: PIXELFUSE_HOST
+        value: 0.0.0.0
+      - key: PIXELFUSE_PORT
+        value: 10000
+      - key: PIXELFUSE_LOG_LEVEL
+        value: info
+      - key: PIXELFUSE_ALLOWED_ORIGINS
+        sync: false
