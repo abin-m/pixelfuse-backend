@@ -8,8 +8,9 @@ ENV PATH="/opt/venv/bin:$PATH"
 COPY pyproject.toml README.md ./
 COPY src/ src/
 
+ARG SETUPTOOLS_SCM_PRETEND_VERSION
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
-    && pip install --no-cache-dir .
+    && SETUPTOOLS_SCM_PRETEND_VERSION=${SETUPTOOLS_SCM_PRETEND_VERSION} pip install --no-cache-dir .
 
 
 FROM python:3.11-slim
