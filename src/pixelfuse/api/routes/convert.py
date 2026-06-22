@@ -46,6 +46,9 @@ async def convert_embed_images(
         content="\n\n".join(blocks),
         media_type="text/plain",
         headers={
-            "Content-Disposition": f"attachment; filename*=UTF-8''{urllib.parse.quote(output_file_name + '.txt', safe='')}"
+            "Content-Disposition": (
+                "attachment; filename*=UTF-8''"
+                + urllib.parse.quote(output_file_name + ".txt", safe="")
+            )
         },
     )
