@@ -2,6 +2,16 @@
 
 FastAPI service that embeds images into portable text files and extracts them back.
 
+## Docs
+
+| # | File | Description |
+|---|------|-------------|
+| 001 | [Overview](docs/001_overview.md) | What PixelFuse does and the text file format |
+| 002 | [API Reference](docs/002_api.md) | Endpoint contracts, fields, and error codes |
+| 003 | [Configuration](docs/003_configuration.md) | Env vars and CLI flags |
+| 004 | [Development](docs/004_development.md) | Local setup, tests, lint, Docker |
+| 005 | [Deployment](docs/005_deployment.md) | Render, CI, self-hosted Docker |
+
 ## Endpoints
 
 | Method | Path | Description |
@@ -10,6 +20,8 @@ FastAPI service that embeds images into portable text files and extracts them ba
 | POST | `/extract-images/` | Upload text file → download ZIP of images |
 
 Supports JPEG, PNG, and HEIC formats. Max 10 files per request (configurable).
+
+**No distortion.** Embed → extract is lossless. Raw image bytes are base64-encoded and decoded back exactly — no re-encoding at any stage.
 
 ## Quickstart
 
@@ -28,7 +40,7 @@ All settings are overridable via environment variables prefixed `PIXELFUSE_`:
 | `PIXELFUSE_PORT` | `8000` | Bind port |
 | `PIXELFUSE_LOG_LEVEL` | `info` | Uvicorn log level |
 | `PIXELFUSE_MAX_UPLOAD_FILES` | `10` | Max files per request |
-| `PIXELFUSE_ALLOWED_ORIGINS` | `["https://pixelfuse-frontend.onrender.com"]` | CORS origins (JSON array) |
+| `PIXELFUSE_ALLOWED_ORIGINS` | *(required)* | CORS origins (JSON array) |
 
 Copy `.env.example` to `.env` for local overrides.
 
@@ -36,10 +48,13 @@ Copy `.env.example` to `.env` for local overrides.
 
 ```bash
 # Lint
-ruff check src tests
+flake8 src tests
 
-# Test
-pytest --tb=short
+# Type check
+mypy src
+
+# All environments
+tox
 ```
 
 ## Deployment
