@@ -17,3 +17,12 @@ async def client(settings: Settings) -> AsyncClient:
         transport=ASGITransport(app=app), base_url="http://test"
     ) as ac:
         yield ac  # type: ignore[misc]
+
+
+@pytest.fixture
+async def rate_limited_client() -> AsyncClient:
+    app = create_app(Settings(allowed_origins=["*"], rate_limit_per_minute=1))
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as ac:
+        yield ac  # type: ignore[misc]

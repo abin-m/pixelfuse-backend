@@ -1,5 +1,6 @@
 import base64
 import io
+import urllib.parse
 from typing import Annotated
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
@@ -45,6 +46,9 @@ async def convert_embed_images(
         content="\n\n".join(blocks),
         media_type="text/plain",
         headers={
-            "Content-Disposition": f'attachment; filename="{output_file_name}.txt"'
+            "Content-Disposition": (
+                "attachment; filename*=UTF-8''"
+                + urllib.parse.quote(output_file_name + ".txt", safe="")
+            )
         },
     )

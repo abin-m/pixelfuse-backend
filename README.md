@@ -40,6 +40,7 @@ All settings are overridable via environment variables prefixed `PIXELFUSE_`:
 | `PIXELFUSE_PORT` | `8000` | Bind port |
 | `PIXELFUSE_LOG_LEVEL` | `info` | Uvicorn log level |
 | `PIXELFUSE_MAX_UPLOAD_FILES` | `10` | Max files per request |
+| `PIXELFUSE_RATE_LIMIT_PER_MINUTE` | `60` | Max requests per minute per IP (0 = disabled) |
 | `PIXELFUSE_ALLOWED_ORIGINS` | *(required)* | CORS origins (JSON array) |
 
 Copy `.env.example` to `.env` for local overrides.
