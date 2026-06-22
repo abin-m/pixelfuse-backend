@@ -2,7 +2,6 @@ import base64
 import io
 import zipfile
 
-import pytest
 from httpx import AsyncClient
 from PIL import Image
 
