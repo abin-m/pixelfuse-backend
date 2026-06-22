@@ -1,5 +1,3 @@
-from typing import Optional
-
 import typer
 import uvicorn
 
@@ -10,10 +8,12 @@ cli = typer.Typer(name="pixelfuse", help="PixelFuse — image embedding API serv
 
 @cli.command()
 def serve(
-    host: Optional[str] = typer.Option(None, help="Bind host (overrides PIXELFUSE_HOST)"),
-    port: Optional[int] = typer.Option(None, help="Bind port (overrides PIXELFUSE_PORT)"),
-    reload: bool = typer.Option(False, "--reload", help="Enable auto-reload (dev only)"),
-    log_level: Optional[str] = typer.Option(
+    host: str | None = typer.Option(None, help="Bind host (overrides PIXELFUSE_HOST)"),
+    port: int | None = typer.Option(None, help="Bind port (overrides PIXELFUSE_PORT)"),
+    reload: bool = typer.Option(
+        False, "--reload", help="Enable auto-reload (dev only)"
+    ),
+    log_level: str | None = typer.Option(
         None, help="Log level (overrides PIXELFUSE_LOG_LEVEL)"
     ),
 ) -> None:

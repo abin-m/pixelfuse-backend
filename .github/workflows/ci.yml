@@ -16,12 +16,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
 
-      - name: Install ruff
-        run: pip install ruff
+      - name: Install tox
+        run: pip install tox
 
-      - name: Check formatting & style
-        run: ruff check src tests
+      - name: Run lint
+        run: tox -e lint
 
   test:
     name: Test
@@ -34,8 +35,8 @@ jobs:
           python-version: "3.11"
           cache: pip
 
-      - name: Install package with dev deps
-        run: pip install -e ".[dev]"
+      - name: Install tox
+        run: pip install tox
 
       - name: Run tests
-        run: pytest --tb=short -q
+        run: tox -e test

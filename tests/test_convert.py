@@ -1,6 +1,5 @@
 import io
 
-import pytest
 from httpx import AsyncClient
 from PIL import Image
 
@@ -19,7 +18,9 @@ async def test_convert_embed_returns_text(client: AsyncClient) -> None:
     )
     assert response.status_code == 200
     assert "Image 1 (test.png)" in response.text
-    assert response.headers["content-disposition"] == 'attachment; filename="output.txt"'
+    assert response.headers["content-disposition"] == (
+        'attachment; filename="output.txt"'
+    )
 
 
 async def test_convert_embed_too_many_files(client: AsyncClient) -> None:
