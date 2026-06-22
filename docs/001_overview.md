@@ -20,3 +20,7 @@ Image 2 (shot.png):
 ```
 
 Each block is separated by a blank line. The `Filename:` header line carries the export name.
+
+## Lossless guarantee
+
+Raw image bytes are base64-encoded directly — no re-encoding at any stage. Embed → extract produces bit-for-bit identical files.
