@@ -1,6 +1,6 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "pixelfuse"
@@ -30,8 +30,8 @@ dev = [
 [project.scripts]
 pixelfuse = "pixelfuse.cli:cli"
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/pixelfuse"]
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.ruff]
 line-length = 88
