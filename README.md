@@ -2,6 +2,16 @@
 
 FastAPI service that embeds images into portable text files and extracts them back.
 
+## Docs
+
+| # | File | Description |
+|---|------|-------------|
+| 001 | [Overview](docs/001_overview.md) | What PixelFuse does and the text file format |
+| 002 | [API Reference](docs/002_api.md) | Endpoint contracts, fields, and error codes |
+| 003 | [Configuration](docs/003_configuration.md) | Env vars and CLI flags |
+| 004 | [Development](docs/004_development.md) | Local setup, tests, lint, Docker |
+| 005 | [Deployment](docs/005_deployment.md) | Render, CI, self-hosted Docker |
+
 ## Endpoints
 
 | Method | Path | Description |
