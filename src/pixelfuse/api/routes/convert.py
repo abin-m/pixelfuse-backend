@@ -1,5 +1,6 @@
 import base64
 import io
+from typing import Annotated
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from fastapi.responses import Response
@@ -12,8 +13,8 @@ router = APIRouter()
 
 @router.post("/convert-embed/")
 async def convert_embed_images(
-    files: list[UploadFile] = File(...),
-    output_file_name: str = Form(...),
+    files: Annotated[list[UploadFile], File()],
+    output_file_name: Annotated[str, Form()],
 ) -> Response:
     settings = get_settings()
     if len(files) > settings.max_upload_files:
