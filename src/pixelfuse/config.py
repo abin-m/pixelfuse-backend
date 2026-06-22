@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     port: int = 8000
     allowed_origins: list[str] = []
     max_upload_files: int = 10
+    rate_limit_per_minute: int = 60
     log_level: str = "info"
 
     model_config = SettingsConfigDict(

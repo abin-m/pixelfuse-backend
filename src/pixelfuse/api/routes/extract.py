@@ -1,5 +1,6 @@
 import base64
 import io
+import re
 import zipfile
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
@@ -8,11 +9,18 @@ from PIL import Image
 
 router = APIRouter()
 
+_HEADER_FILENAME_RE = re.compile(r"\((.+?)\):")
+
 
 @router.post("/extract-images/")
 async def extract_images_from_text(file: UploadFile = File(...)) -> StreamingResponse:
     content = await file.read()
-    blocks = content.decode("utf-8").split("\n\n")
+    try:
+        text = content.decode("utf-8")
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="File must be UTF-8 encoded text.")
+
+    blocks = text.split("\n\n")
 
     zip_buffer = io.BytesIO()
     count = 0
@@ -22,10 +30,13 @@ async def extract_images_from_text(file: UploadFile = File(...)) -> StreamingRes
             if not block.startswith("Image"):
                 continue
             try:
-                header, encoded = block.split(":", 1)
+                header, encoded = block.split("\n", 1)
                 img_data = base64.b64decode(encoded.strip())
 
-                if "heic" in header.lower():
+                m = _HEADER_FILENAME_RE.search(header)
+                is_heic = m is not None and m.group(1).lower().endswith(".heic")
+
+                if is_heic:
                     zf.writestr(f"image_{idx + 1}.heic", img_data)
                 else:
                     img = Image.open(io.BytesIO(img_data))
