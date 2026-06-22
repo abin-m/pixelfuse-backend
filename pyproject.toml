@@ -3,7 +3,7 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pixelfuse"
+name = "bh_pixelfuse"
 version = "1.0.0"
 description = "Embed images into portable text files and extract them back"
 readme = "README.md"
