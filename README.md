@@ -21,6 +21,8 @@ FastAPI service that embeds images into portable text files and extracts them ba
 
 Supports JPEG, PNG, and HEIC formats. Max 10 files per request (configurable).
 
+**No distortion.** Embed → extract is lossless. Raw image bytes are base64-encoded and decoded back exactly — no re-encoding at any stage.
+
 ## Quickstart
 
 ```bash

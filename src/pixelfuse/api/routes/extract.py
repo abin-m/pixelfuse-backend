@@ -30,9 +30,7 @@ async def extract_images_from_text(file: UploadFile = File(...)) -> StreamingRes
                 else:
                     img = Image.open(io.BytesIO(img_data))
                     fmt = (img.format or "PNG").lower()
-                    buf = io.BytesIO()
-                    img.save(buf, format=img.format or "PNG")
-                    zf.writestr(f"image_{idx + 1}.{fmt}", buf.getvalue())
+                    zf.writestr(f"image_{idx + 1}.{fmt}", img_data)
 
                 count += 1
             except Exception as exc:

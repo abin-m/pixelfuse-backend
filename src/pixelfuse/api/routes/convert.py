@@ -31,10 +31,8 @@ async def convert_embed_images(
             if filename.lower().endswith(".heic") or file.content_type == "image/heic":
                 encoded = base64.b64encode(content).decode()
             else:
-                image = Image.open(io.BytesIO(content))
-                buf = io.BytesIO()
-                image.save(buf, format=image.format or "PNG")
-                encoded = base64.b64encode(buf.getvalue()).decode()
+                Image.open(io.BytesIO(content)).verify()
+                encoded = base64.b64encode(content).decode()
             blocks.append(f"Image {idx + 1} ({filename}):\n{encoded}")
         except Exception as exc:
             raise HTTPException(
