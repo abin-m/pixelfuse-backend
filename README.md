@@ -28,7 +28,7 @@ All settings are overridable via environment variables prefixed `PIXELFUSE_`:
 | `PIXELFUSE_PORT` | `8000` | Bind port |
 | `PIXELFUSE_LOG_LEVEL` | `info` | Uvicorn log level |
 | `PIXELFUSE_MAX_UPLOAD_FILES` | `10` | Max files per request |
-| `PIXELFUSE_ALLOWED_ORIGINS` | `["https://pixelfuse-frontend.onrender.com"]` | CORS origins (JSON array) |
+| `PIXELFUSE_ALLOWED_ORIGINS` | *(required)* | CORS origins (JSON array) |
 
 Copy `.env.example` to `.env` for local overrides.
 
@@ -36,10 +36,13 @@ Copy `.env.example` to `.env` for local overrides.
 
 ```bash
 # Lint
-ruff check src tests
+flake8 src tests
 
-# Test
-pytest --tb=short
+# Type check
+mypy src
+
+# All environments
+tox
 ```
 
 ## Deployment
